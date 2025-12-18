@@ -1,0 +1,11 @@
+.vscode/
+pseudosrc/
+build/
+build.sh
+*.log
+*.bak
+*.lnk
+*.symlink
+result
+result-*
+/main*
