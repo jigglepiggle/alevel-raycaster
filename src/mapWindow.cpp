@@ -21,12 +21,12 @@ private:
 
     void drawRays(SDL_Renderer* renderer, const Player& player, std::vector<RayHit> rayResults) {
         for (const auto& ray : rayResults) {
-            std::cout << "Distance: " << ray.distance << std::endl;
-            std::cout << "Hit X: " << ray.hitX << std::endl;
-            std::cout << "Hit Y: " << ray.hitY << std::endl;
-            std::cout << "Wall Type: " << ray.wallType << std::endl;
-            std::cout << "Hit Vertical Wall: " << (ray.hitVerticalWall ? "Yes" : "No") << std::endl;
-            std::cout << "---" << std::endl;
+            //std::cout << "Distance: " << ray.distance << std::endl;
+            //std::cout << "Hit X: " << ray.hitX << std::endl;
+            //std::cout << "Hit Y: " << ray.hitY << std::endl;
+            //std::cout << "Wall Type: " << ray.wallType << std::endl;
+            //std::cout << "Hit Vertical Wall: " << (ray.hitVerticalWall ? "Yes" : "No") << std::endl;
+            //std::cout << "---" << std::endl;
 
             float startX = player.getX() * 9; //Multiplied by 9 to normalise to pixel form instead of 2d vector
             float startY = player.getY() * 9;

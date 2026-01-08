@@ -67,7 +67,7 @@ int main() {
     raycaster.setMaxDistance(6.0);
     // End Raycaster Init
 
-// Main Loop
+    // Main Loop
     while (mapView.isRunning() || gameView.isRunning())
     {
         std::vector<RayHit> rayResults = raycaster.castAllRays(player, screenWidth); 

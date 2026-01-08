@@ -165,8 +165,8 @@ void DepthFirstMazeGenerator::generateMaze() {
     }
     
     // Create entrance and exit points
-    maze[1][0] = 0;              // Entrance on left side
-    maze[height-2][width-1] = 0; // Exit on right side
+    maze[1][0] = 2;              // Entrance on left side
+    maze[height-2][width-1] = 2; // Exit on right side
 }
 
 /**

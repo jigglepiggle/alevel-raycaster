@@ -5,6 +5,17 @@
 #include "game.cpp"
 #include "raycaster.cpp"
 
+struct Color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
+    
+    // Constructor with default alpha = 255 (fully opaque)
+    Color(unsigned char red = 0, unsigned char green = 0, unsigned char blue = 0, unsigned char alpha = 255)
+        : r(red), g(green), b(blue), a(alpha) {}
+};
+
 //Not finished at all
 class GameView {
 private:
@@ -22,17 +33,28 @@ private:
 
             // Calculate top and bottom of the wall slice
             float wallTop = (screenHeight - wallHeight) / 2.0f;
+            
+            Color wallColor(100, 100, 100, 255);
+            
+            switch(ray.wallType) {
+                case 1:
+                    wallColor = Color(255, 0, 0, 255);
+                    break;
+                case 2:
+                    wallColor = Color(255, 255, 0, 255);
+                    break;
+            }
 
             // Draw each ray as a 1-pixel wide vertical line
             SDL_FRect rect = { (float)i, wallTop, 1.0f, wallHeight };
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_SetRenderDrawColor(renderer, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
             SDL_RenderFillRect(renderer, &rect);
         }
     }
 
     void drawFloor(SDL_Renderer* renderer, float windowHeight, float windowWidth) {
         SDL_FRect rect = { 0, 0, windowWidth, windowHeight };
-        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 100, 255);
         SDL_RenderFillRect(renderer, &rect);
     }
 
