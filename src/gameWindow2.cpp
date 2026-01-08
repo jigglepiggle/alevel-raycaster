@@ -10,18 +10,18 @@ class GameView {
 private:
     int rayWidth;
 
-    void drawRays(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults) {
+    void drawRays(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults, float screenHeight, float screenWidth) {
         for (size_t i = 0; i < rayResults.size(); i++) {
             const auto& ray = rayResults[i];
 
             // Scale factor to adjust wall height perception
-            float wallHeight = (ray.distance > 0.01f) ? (360.0f / ray.distance) : 720.0f;
+            float wallHeight = (ray.distance > 0.01f) ? (360.0f / ray.distance) : screenHeight;
 
             // Cap the wall height to screen height
-            if (wallHeight > 720.0f) wallHeight = 720.0f;
+            if (wallHeight > screenHeight) wallHeight = screenHeight;
 
             // Calculate top and bottom of the wall slice
-            float wallTop = (720.0f - wallHeight) / 2.0f;
+            float wallTop = (screenHeight - wallHeight) / 2.0f;
 
             // Draw each ray as a 1-pixel wide vertical line
             SDL_FRect rect = { (float)i, wallTop, 1.0f, wallHeight };
@@ -30,16 +30,16 @@ private:
         }
     }
 
-    void drawFloor(SDL_Renderer* renderer, int windowHeight, int windowWidth) {
-        SDL_FRect rect = { 0, 0, windowHeight, windowHeight };
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    void drawFloor(SDL_Renderer* renderer, float windowHeight, float windowWidth) {
+        SDL_FRect rect = { 0, 0, windowWidth, windowHeight };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
         SDL_RenderFillRect(renderer, &rect);
     }
 
 public:
-    void render(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults) {
-        //drawFloor(renderer);
-        drawRays(renderer, rayWidth, rayResults);
+    void render(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults, float screenHeight, float screenWidth) {
+        drawFloor(renderer, screenHeight, screenWidth);
+        drawRays(renderer, rayWidth, rayResults, screenHeight, screenWidth);
     }
 }; 
 
@@ -146,7 +146,7 @@ public:
         SDL_RenderClear(renderer);
         
         // Render content
-        gameView.render(renderer, rayWidth, rayResults);
+        gameView.render(renderer, rayWidth, rayResults, windowHeight, windowWidth);
         
         // Present to screen
         SDL_RenderPresent(renderer);

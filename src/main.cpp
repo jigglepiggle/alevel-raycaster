@@ -26,11 +26,12 @@ int main() {
 
 
     // Start Player Init
-    float playerX = 20;
-    float playerY = 20;
+    float playerX = 0.5;
+    float playerY = 1.5;
     float playerAngle = 0;
-    float FOV = 90;
+    float FOV = 120;
     float screenWidth = 1280;
+    float screenHeight = 720;
 
     Player player(playerX, playerY, playerAngle, FOV);
     // End Player Init
@@ -41,7 +42,7 @@ int main() {
     std::cout << worldMap.getHeight() << std::endl;
     std::cout << worldMap.isWall(0, 0) << std::endl;
 
-    MapWindow mapView(566, 566);
+    MapWindow mapView((height*9)-1, (width*9)-1);
 
     if (!mapView.init()) {
         return 1;
@@ -51,7 +52,7 @@ int main() {
     // End MiniMap Init
 
     // Start GameView Init
-    GameWindow gameView(1280, 720, FOV);
+    GameWindow gameView(screenWidth, screenHeight, FOV);
 
     if (!gameView.init()) {
         return 2;
