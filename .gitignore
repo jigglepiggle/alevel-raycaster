@@ -1,7 +1,6 @@
 .vscode/
 pseudosrc/
 build/
-build.sh
 *.log
 *.bak
 *.lnk
@@ -9,3 +8,4 @@ build.sh
 result
 result-*
 /main*
+/superseded*
