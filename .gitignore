@@ -1,6 +1,7 @@
 .vscode/
 pseudosrc/
 build/
+superseded/
 *.log
 *.bak
 *.lnk
@@ -8,4 +9,3 @@ build/
 result
 result-*
 /main*
-/superseded*
