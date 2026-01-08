@@ -1,8 +1,8 @@
 #pragma once
 
 #include "raycaster.cpp"
-#include "mapWindow2.cpp"
-#include "gameWindow2.cpp"
+#include "mapWindow.cpp"
+#include "gameWindow.cpp"
 
 #include "depthFirstMazeGenerator.h"
 #include "recursiveDivisionMazeGenerator.h"

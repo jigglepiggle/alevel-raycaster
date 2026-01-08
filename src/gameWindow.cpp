@@ -1,25 +1,107 @@
 #include <SDL3/SDL.h>
 #include <iostream>
+#include <vector>
+
+#include "game.cpp"
+#include "raycaster.cpp"
+
+//Not finished at all
+class GameView {
+private:
+    int rayWidth;
+
+    void drawRays(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults, float screenHeight, float screenWidth) {
+        for (size_t i = 0; i < rayResults.size(); i++) {
+            const auto& ray = rayResults[i];
+
+            // Scale factor to adjust wall height perception
+            float wallHeight = (ray.distance > 0.01f) ? (360.0f / ray.distance) : screenHeight;
+
+            // Cap the wall height to screen height
+            if (wallHeight > screenHeight) wallHeight = screenHeight;
+
+            // Calculate top and bottom of the wall slice
+            float wallTop = (screenHeight - wallHeight) / 2.0f;
+
+            // Draw each ray as a 1-pixel wide vertical line
+            SDL_FRect rect = { (float)i, wallTop, 1.0f, wallHeight };
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+
+    void drawFloor(SDL_Renderer* renderer, float windowHeight, float windowWidth) {
+        SDL_FRect rect = { 0, 0, windowWidth, windowHeight };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        SDL_RenderFillRect(renderer, &rect);
+    }
+
+public:
+    void render(SDL_Renderer* renderer, float rayWidth, std::vector<RayHit> rayResults, float screenHeight, float screenWidth) {
+        drawFloor(renderer, screenHeight, screenWidth);
+        drawRays(renderer, rayWidth, rayResults, screenHeight, screenWidth);
+    }
+}; 
 
 
 class GameWindow {
 private:
     SDL_Window* window;
     SDL_Renderer* renderer;
+    GameView gameView;
     bool running;
     int windowWidth;
     int windowHeight;
+    int FOV;
+    float rayWidth;
+
+    void cleanup() {
+        if (renderer) {
+            SDL_DestroyRenderer(renderer);
+            renderer = nullptr;
+        }
+        if (window) {
+            SDL_DestroyWindow(window);
+            window = nullptr;
+        }
+        SDL_Quit();
+    }
+
+    void handleEvents(Player& player) {
+        const bool *keys = SDL_GetKeyboardState(NULL);
+
+        if (keys[SDL_SCANCODE_ESCAPE]) {
+            running = false;
+        }
+
+        if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP]) {
+            player.moveForward();
+        }
+        if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN]) {
+            player.moveBackwards();
+        }
+        if (keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_LEFT]) {
+            player.turnLeft();
+        }
+        if (keys[SDL_SCANCODE_D] || keys[SDL_SCANCODE_RIGHT]) {
+            player.turnRight();
+        }
+    }
 
 public:
-    GameWindow(int width = 1280, int height = 720)
-        : window(nullptr), renderer(nullptr), running(false),
-          windowWidth(width), windowHeight(height) {}
+    GameWindow(int width = 1280, int height = 720, int fov = 120)
+        : window(nullptr), renderer(nullptr),
+          running(false), windowWidth(width), windowHeight(height), FOV(fov) {}
 
     ~GameWindow() {
         cleanup();
     }
 
-    bool initialize() {
+    bool isRunning() {
+        return running;
+    }
+
+    bool init() {
         // Initialize SDL
         if (!SDL_Init(SDL_INIT_VIDEO)) {
             std::cerr << "SDL_Init failed: " << SDL_GetError() << std::endl;
@@ -28,7 +110,7 @@ public:
 
         // Create window
         window = SDL_CreateWindow(
-            "Grid Window",
+            "Game Window",
             windowWidth, windowHeight,
             0
         );
@@ -46,60 +128,29 @@ public:
             SDL_Quit();
             return false;
         }
-
         return true;
     }
-    
-    bool isRunning() { return running; };
 
     void initRun() {
         running = true;
 
-        renderFrame();
+        rayWidth = 1.0f;
     }
 
-    void update() {
-        if (running == true)
-        {
-            handleEvents();
-            renderFrame();
-            SDL_Delay(16); // ~60 FPS
-        }
-    }
+    void update(Player& player, std::vector<RayHit> rayResults) {
+        // Handle events
+        handleEvents(player);
 
-private:
-    void handleEvents() {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
-            else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.key == SDLK_ESCAPE) {
-                    running = false;
-                }
-            }
-        }
-    }
-
-    void renderFrame() {
-        // Clear screen with background color (dark gray)
+        // Clear the screen
         SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
         SDL_RenderClear(renderer);
-
-        // Present
+        
+        // Render content
+        gameView.render(renderer, rayWidth, rayResults, windowHeight, windowWidth);
+        
+        // Present to screen
         SDL_RenderPresent(renderer);
-    }
 
-    void cleanup() {
-        if (renderer) {
-            SDL_DestroyRenderer(renderer);
-            renderer = nullptr;
-        }
-        if (window) {
-            SDL_DestroyWindow(window);
-            window = nullptr;
-        }
-        SDL_Quit();
+        SDL_Delay(16);
     }
 };
