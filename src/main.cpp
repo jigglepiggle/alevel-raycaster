@@ -29,7 +29,7 @@ int main() {
     float playerX = 0.5;
     float playerY = 1.5;
     float playerAngle = 0;
-    float FOV = 120;
+    float FOV = 90;
     float screenWidth = 1280;
     float screenHeight = 720;
 
