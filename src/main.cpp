@@ -26,7 +26,7 @@ int main() {
 
 
     // Start Player Init
-    float playerX = 0.5;
+    float playerX = 1.5;
     float playerY = 1.5;
     float playerAngle = 0;
     float FOV = 90;
@@ -43,6 +43,8 @@ int main() {
     std::cout << worldMap.isWall(0, 0) << std::endl;
 
     MapWindow mapView((height*9)-1, (width*9)-1);
+
+    p[layer.setWorldMap(&worldMap);
 
     if (!mapView.init()) {
         return 1;
