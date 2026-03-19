@@ -9,3 +9,6 @@ superseded/
 result
 result-*
 /main*
+html/
+xml/
+Doxyfile

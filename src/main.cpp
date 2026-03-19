@@ -44,7 +44,7 @@ int main() {
 
     MapWindow mapView((height*9)-1, (width*9)-1);
 
-    p[layer.setWorldMap(&worldMap);
+    player.setWorldMap(&worldMap);
 
     if (!mapView.init()) {
         return 1;
