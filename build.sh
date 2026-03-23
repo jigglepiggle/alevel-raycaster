@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# build.sh - Simplified CMake build script
 # Usage: ./build.sh [command] [options]
 
 set -e  # Exit on any error

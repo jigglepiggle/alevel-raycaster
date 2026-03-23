@@ -6,6 +6,28 @@
 #include "game.cpp"
 
 
+class SolutionPath {
+public:
+    void render(SDL_Renderer* renderer,
+                const std::vector<std::pair<int,int>>& path,
+                int cellSize = 9) {
+        if (path.empty()) return;
+
+        SDL_SetRenderDrawColor(renderer, 255, 220, 0, 255); // Yellow
+
+        for (const auto& [x, y] : path) {
+            // Centre a 3x3 dot inside the cell
+            SDL_FRect rect = {
+                static_cast<float>(x * cellSize + cellSize / 2 - 1),
+                static_cast<float>(y * cellSize + cellSize / 2 - 1),
+                3.0f, 3.0f
+            };
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+};
+
+
 class PlayerView {
 private:
     void drawPlayer(SDL_Renderer* renderer, const Player& player) {
@@ -107,6 +129,8 @@ private:
     bool running;
     Grid grid;
     PlayerView playerView;
+    SolutionPath solutionPathView;
+    std::vector<std::pair<int,int>> solution;
     int windowWidth;
     int windowHeight;
 
@@ -179,10 +203,13 @@ public:
         return true;
     }
 
-    void initRun(WorldMap map) {
+    void initRun(WorldMap& map) {
         running = true;
 
         grid.setWorldMap(map.getMap());
+
+        map.solveMaze();
+        solution = map.getSolutionPath();
     }
 
     void update(Player player, std::vector<RayHit> rayResults) {
@@ -195,6 +222,7 @@ public:
         
         // Render content
         grid.render(renderer);
+        solutionPathView.render(renderer, solution);
         playerView.render(renderer, player, rayResults);
         
         // Present to screen

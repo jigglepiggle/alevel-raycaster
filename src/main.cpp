@@ -1,11 +1,21 @@
 #pragma once
 
+#include <ctime>
+
 #include "raycaster.cpp"
 #include "mapWindow.cpp"
 #include "gameWindow.cpp"
 
 #include "depthFirstMazeGenerator.h"
 #include "recursiveDivisionMazeGenerator.h"
+
+
+int gameWin(time_t startTime) {
+    // End timer
+    double elapsed = std::difftime(std::time(nullptr), startTime);
+    std::cout << "Finished maze in " << elapsed << " Seconds" <<std::endl;
+    exit(0);
+}
 
 // Main Game Loop
 int main() {
@@ -26,8 +36,8 @@ int main() {
 
 
     // Start Player Init
-    float playerX = 1.5;
-    float playerY = 1.5;
+    float playerX = 41.5;
+    float playerY = 41.5;
     float playerAngle = 0;
     float FOV = 90;
     float screenWidth = 1280;
@@ -69,6 +79,9 @@ int main() {
     raycaster.setMaxDistance(6.0);
     // End Raycaster Init
 
+    // Start Timer
+    time_t startTime = std::time(nullptr);
+
     // Main Loop
     while (mapView.isRunning() || gameView.isRunning())
     {
@@ -76,6 +89,13 @@ int main() {
 
         gameView.update(player, rayResults);
         mapView.update(player, rayResults);
+
+        // Win condition check
+        float dx = player.getX() - (width - 0.5);   // Final block is indexed by [width-1, height-2]
+        float dy = player.getY() - (height - 1.5);  // Use 0.5 so check is based on centre of the area
+        if (dx*dx + dy*dy < 1.5f * 1.5f) {
+            gameWin(startTime);
+        }
 
     }
     
