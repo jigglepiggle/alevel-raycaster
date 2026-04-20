@@ -77,7 +77,7 @@ int main() {
     // Start Raycaster Init
     Raycaster raycaster(worldMap);
 
-    raycaster.setMaxDistance(6.0);
+    raycaster.setMaxDistance(12.0);
     // End Raycaster Init
 
     // After worldMap setup:
