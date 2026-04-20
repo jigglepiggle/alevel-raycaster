@@ -57,12 +57,17 @@ private:
         for (int i = 0; i < static_cast<int>(rayResults.size()); i++) {
             const auto& ray = rayResults[i];
 
-            int wallHeight = static_cast<int>((ray.distance > 0.01f)
-                             ? (360.0f / ray.distance)
-                             : screenH);
-            if (wallHeight > screenH) wallHeight = screenH;
+            // Full wall height in pixels — may exceed screen height when close
+            int fullWallHeight = static_cast<int>((ray.distance > 0.01f)
+                                 ? (360.0f / ray.distance)
+                                 : screenH * 2);
 
-            int wallTop = (screenH - wallHeight) / 2;
+            // Where the top of the full wall would be (may be negative when close)
+            int wallTop = (screenH - fullWallHeight) / 2;
+
+            // Clamp draw range to screen bounds
+            int drawStart = std::max(0, wallTop);
+            int drawEnd   = std::min(screenH - 1, wallTop + fullWallHeight);
 
             int texIndex = ray.wallType - 1;
 
@@ -73,8 +78,8 @@ private:
                     case 1: r = 255; g = 0;   b = 0;   break;
                     case 2: r = 255; g = 255; b = 0;   break;
                 }
-                for (int y = 0; y < wallHeight; y++) {
-                    setPixel(pixels, pitch, i, wallTop + y, r, g, b);
+                for (int y = drawStart; y <= drawEnd; y++) {
+                    setPixel(pixels, pitch, i, y, r, g, b);
                 }
                 continue;
             }
@@ -83,8 +88,12 @@ private:
             int texX = static_cast<int>(ray.wallU * tex.width);
             texX = std::max(0, std::min(texX, tex.width - 1));
 
-            for (int y = 0; y < wallHeight; y++) {
-                int texY = static_cast<int>((static_cast<float>(y) / wallHeight) * tex.height);
+            for (int y = drawStart; y <= drawEnd; y++) {
+                // Map this screen pixel back into the full wall height,
+                // then into texture space. Correctly samples the middle
+                // slice of the texture when the wall is taller than the screen.
+                float wallProgress = static_cast<float>(y - wallTop) / fullWallHeight;
+                int texY = static_cast<int>(wallProgress * tex.height);
                 texY = std::max(0, std::min(texY, tex.height - 1));
 
                 uint32_t pixel = tex.getPixel(texX, texY);
@@ -95,7 +104,7 @@ private:
                 // Darken horizontal wall hits for depth shading
                 if (!ray.hitVerticalWall) { r /= 2; g /= 2; b /= 2; }
 
-                setPixel(pixels, pitch, i, wallTop + y, r, g, b);
+                setPixel(pixels, pitch, i, y, r, g, b);
             }
         }
     }
