@@ -8,6 +8,7 @@ public:
     float distance;
     float hitX;
     float hitY;
+    float wallU;         // 0.0 to 1.0 — position along the wall face for texture sampling
     int wallType;
     bool hitVerticalWall;
     float angle;
@@ -34,8 +35,8 @@ private:
         float rayDirectionX = cos(angle);
         float rayDirectionY = sin(angle);
 
-        int currentMapX = floor(startX);
-        int currentMapY = floor(startY);
+        int currentMapX = static_cast<int>(floor(startX));
+        int currentMapY = static_cast<int>(floor(startY));
 
         float deltaDistX = abs(1 / rayDirectionX);
         float deltaDistY = abs(1 / rayDirectionY);
@@ -62,61 +63,73 @@ private:
         }
 
         bool hitWall = false;
-        WallType hitSide;
+        WallType hitSide = WallType::VERTICAL;
 
         float distance = 0.0;
 
+        int mapHeight = static_cast<int>(worldMap.size());
+        int mapWidth  = static_cast<int>(worldMap[0].size());
+
         while (!hitWall && distance < maxRayDistance) {
             if (sideDistX < sideDistY) {
-                sideDistX = sideDistX + deltaDistX;
-                currentMapX = currentMapX + stepX;
+                sideDistX    += deltaDistX;
+                currentMapX  += stepX;
                 hitSide = WallType::VERTICAL;
             } else {
-                sideDistY = sideDistY + deltaDistY;
-                currentMapY = currentMapY + stepY;
+                sideDistY    += deltaDistY;
+                currentMapY  += stepY;
                 hitSide = WallType::HORIZONTAL;
             }
 
-            if (currentMapY < 0 || currentMapY >= worldMap.size() || 
-                currentMapX < 0 || currentMapX >= worldMap[0].size()) {
+            if (currentMapY < 0 || currentMapY >= mapHeight ||
+                currentMapX < 0 || currentMapX >= mapWidth) {
                 hitWall = true;
             } else if (worldMap[currentMapY][currentMapX] != 0) {
                 hitWall = true;
             }
         }
 
-        // FIXED: Use the DDA's accumulated distance directly
-        // This is the actual ray travel distance from the DDA algorithm
+        // Use the DDA's accumulated distance directly
         float wallDistance;
         if (hitSide == WallType::VERTICAL) {
-            wallDistance = sideDistX - deltaDistX;  // Step back one delta to get distance to wall
+            wallDistance = sideDistX - deltaDistX;
         } else {
             wallDistance = sideDistY - deltaDistY;
         }
 
-        // Calculate hit point using the actual ray distance (BEFORE fisheye correction)
+        // Calculate hit point using the actual ray distance (before fisheye correction)
         float hitPointX = startX + rayDirectionX * wallDistance;
         float hitPointY = startY + rayDirectionY * wallDistance;
+
+        // Calculate wallU: fractional position along the wall face
+        float wallU;
+        if (hitSide == WallType::VERTICAL) {
+            wallU = hitPointY - floor(hitPointY);
+            if (rayDirectionX > 0) wallU = 1.0f - wallU; // flip so texture isn't mirrored
+        } else {
+            wallU = hitPointX - floor(hitPointX);
+            if (rayDirectionY < 0) wallU = 1.0f - wallU;
+        }
 
         // Apply fisheye correction to get perpendicular distance
         float angleDiff = normalizeAngleDiff(angle - playerAngle);
         wallDistance = wallDistance * cos(angleDiff);
 
-        RayHit rayHit = RayHit();
-        rayHit.distance = wallDistance;
-        rayHit.hitX = hitPointX;
-        rayHit.hitY = hitPointY;
-        rayHit.angle = angle;
-            
-        // Add bounds check before accessing worldMap
-        if (currentMapY >= 0 && currentMapY < worldMap.size() && 
-            currentMapX >= 0 && currentMapX < worldMap[0].size()) {
+        RayHit rayHit;
+        rayHit.distance       = wallDistance;
+        rayHit.hitX           = hitPointX;
+        rayHit.hitY           = hitPointY;
+        rayHit.wallU          = wallU;
+        rayHit.angle          = angle;
+        rayHit.hitVerticalWall = (hitSide == WallType::VERTICAL);
+
+        if (currentMapY >= 0 && currentMapY < mapHeight &&
+            currentMapX >= 0 && currentMapX < mapWidth) {
             rayHit.wallType = worldMap[currentMapY][currentMapX];
         } else {
-            rayHit.wallType = 1;  // Default wall type for out of bounds
+            rayHit.wallType = 1; // default for out-of-bounds
         }
-        
-        rayHit.hitVerticalWall = (hitSide == WallType::VERTICAL);
+
         return rayHit;
     }
 
@@ -130,57 +143,32 @@ public:
 
         float playerAngle = player.getAngle();
 
-        // Calculate camera direction and plane vectors
         float dirX = cos(playerAngle);
         float dirY = sin(playerAngle);
 
-        // Camera plane perpendicular to direction (90 degrees rotated)
-        float FOVRadians = player.getFieldOfView() * (M_PI / 180.0f);
+        float FOVRadians  = player.getFieldOfView() * (M_PI / 180.0f);
         float planeLength = tan(FOVRadians / 2.0f);
-        float planeX = -dirY * planeLength;
-        float planeY = dirX * planeLength;
+        float planeX      = -dirY * planeLength;
+        float planeY      =  dirX * planeLength;
 
         for (int x = 0; x < screenWidth; x++) {
-            // Calculate ray position on camera plane (-1 to +1)
-            float cameraX = 2.0f * x / (float)screenWidth - 1.0f;
+            // Camera plane position: -1 (left) to +1 (right)
+            float cameraX = 2.0f * x / static_cast<float>(screenWidth) - 1.0f;
 
-            // Calculate ray direction
             float rayDirX = dirX + planeX * cameraX;
             float rayDirY = dirY + planeY * cameraX;
 
-            // Normalize ray direction
+            // Normalise ray direction
             float rayLength = sqrt(rayDirX * rayDirX + rayDirY * rayDirY);
             rayDirX /= rayLength;
             rayDirY /= rayLength;
 
-            // Calculate angle for this ray
             float currentRayAngle = atan2(rayDirY, rayDirX);
 
-            RayHit rayHit = castSingleRay(player.getX(), player.getY(), currentRayAngle, playerAngle);
-
-            rayResults.push_back(rayHit);
+            rayResults.push_back(castSingleRay(player.getX(), player.getY(), currentRayAngle, playerAngle));
         }
         return rayResults;
     }
 
-// This doesn't work, Fixed angle incrementation only works if the display is curver around the viewer in real life.  Vector Plane projection fixes this as done above
-/*
-        std::vector<RayHit> rayResults;
-
-        float FOVRadians = player.getFieldOfView() * (M_PI / 180.0f);
-
-        float angleStep = FOVRadians / screenWidth;
-        float startAngle = player.getAngle() - FOVRadians/2;
-
-        for (int i = 0; i < screenWidth; i++) {
-            float currentRayAngle = startAngle + (i * angleStep);
-
-            RayHit rayHit = castSingleRay(player.getX(), player.getY(), currentRayAngle, player.getAngle());
-
-            rayResults.push_back(rayHit);
-        }
-        return rayResults;
-    }
-*/
-    void setMaxDistance(float distance){ maxRayDistance = distance; }
+    void setMaxDistance(float distance) { maxRayDistance = distance; }
 };

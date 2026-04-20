@@ -2,18 +2,4 @@ TODO:
 
 - Add Textures
 - Add Menu
-- Timing
-- Start/Finish
 - Waypoint System
-
-
-Design:
- - DFD L0 & L1(Extra)
- - Systems Flowchart
- - HCI Diagram
- - Hierarchy Chart
- - ISPO Diagram
- - Entity Relationship Diagram
- - Class Diagrams
- - Algorithms (Pseudocode / Flowchart)
- - Data Structures

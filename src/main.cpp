@@ -8,6 +8,7 @@
 
 #include "depthFirstMazeGenerator.h"
 #include "recursiveDivisionMazeGenerator.h"
+#include "texture.cpp"
 
 
 int gameWin(time_t startTime) {
@@ -31,13 +32,13 @@ int main() {
     RecursiveDivisionMazeGenerator rdGen(width, height, seed);
     rdGen.generateMaze();
 
-    std::vector<std::vector<int>> map = dfGen.getMaze();
+    std::vector<std::vector<int>> map = rdGen.getMaze();
     // End Maze Init
 
 
     // Start Player Init
-    float playerX = 41.5;
-    float playerY = 41.5;
+    float playerX = 1.5;
+    float playerY = 1.5;
     float playerAngle = 0;
     float FOV = 90;
     float screenWidth = 1280;
@@ -45,7 +46,7 @@ int main() {
 
     Player player(playerX, playerY, playerAngle, FOV);
     // End Player Init
-
+    
     // Start MiniMap Init
     WorldMap worldMap(map, height, width);
 
@@ -79,6 +80,11 @@ int main() {
     raycaster.setMaxDistance(6.0);
     // End Raycaster Init
 
+    // After worldMap setup:
+    std::vector<Texture> textures;
+    textures.push_back(makeBrickTexture());   // wallType 1
+    textures.push_back(makeStoneTexture());   // wallType 2 (optional)
+
     // Start Timer
     time_t startTime = std::time(nullptr);
 
@@ -87,7 +93,7 @@ int main() {
     {
         std::vector<RayHit> rayResults = raycaster.castAllRays(player, screenWidth); 
 
-        gameView.update(player, rayResults);
+        gameView.update(player, rayResults, textures);
         mapView.update(player, rayResults);
 
         // Win condition check

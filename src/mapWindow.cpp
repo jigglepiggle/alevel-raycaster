@@ -37,7 +37,7 @@ private:
         int playerPY = (player.getY() * 9);
 
         SDL_RenderPoint(renderer, playerPX / 9, playerPY / 9);
-        SDL_FRect rect = { playerPX, playerPY, 3, 3 };
+        SDL_FRect rect = { (float)playerPX, (float)playerPY, 3, 3 };
         SDL_RenderFillRect(renderer, &rect);
     }
 
