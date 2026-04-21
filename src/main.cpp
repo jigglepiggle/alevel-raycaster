@@ -5,105 +5,113 @@
 #include "raycaster.cpp"
 #include "mapWindow.cpp"
 #include "gameWindow.cpp"
+#include "menuWindow.cpp"
 
 #include "depthFirstMazeGenerator.h"
 #include "recursiveDivisionMazeGenerator.h"
-#include "texture.cpp"
 
 
 int gameWin(time_t startTime) {
-    // End timer
     double elapsed = std::difftime(std::time(nullptr), startTime);
-    std::cout << "Finished maze in " << elapsed << " Seconds" <<std::endl;
+    std::cout << "Finished maze in " << elapsed << " Seconds" << std::endl;
     exit(0);
 }
 
-// Main Game Loop
 int main() {
 
-    // Start Maze Init
+    // ── Menu ─────────────────────────────────────────────────────────────────
+    MenuWindow menu;
+    if (!menu.init()) return 1;
+
+    MenuResult menuResult = menu.run();
+
+    if (menuResult.action == MenuAction::EXIT) {
+        return 0;
+    }
+
+    if (menuResult.action == MenuAction::OPTIONS) {
+        // Options not yet implemented — fall through to game for now
+        std::cout << "Options not yet implemented, starting game." << std::endl;
+    }
+
+    int seed = menuResult.seed;
+    std::cout << "Starting game with seed: " << seed << std::endl;
+    // ─────────────────────────────────────────────────────────────────────────
+
+
+    // ── Maze Init ─────────────────────────────────────────────────────────────
     int height = 63;
-    int width = 63;
-    int seed = 0;
+    int width  = 63;
 
     DepthFirstMazeGenerator dfGen(width, height, seed);
     dfGen.generateMaze();
-    
+
     RecursiveDivisionMazeGenerator rdGen(width, height, seed);
     rdGen.generateMaze();
 
     std::vector<std::vector<int>> map = rdGen.getMaze();
-    // End Maze Init
+    // ─────────────────────────────────────────────────────────────────────────
 
 
-    // Start Player Init
-    float playerX = 1.5;
-    float playerY = 1.5;
-    float playerAngle = 0;
-    float FOV = 90;
-    float screenWidth = 1280;
-    float screenHeight = 720;
+    // ── Player Init ───────────────────────────────────────────────────────────
+    float playerX     = 1.5f;
+    float playerY     = 1.5f;
+    float playerAngle = 0.0f;
+    float FOV         = 90.0f;
+    float screenWidth  = 1280.0f;
+    float screenHeight = 720.0f;
 
     Player player(playerX, playerY, playerAngle, FOV);
-    // End Player Init
-    
-    // Start MiniMap Init
+    // ─────────────────────────────────────────────────────────────────────────
+
+
+    // ── WorldMap + MiniMap Init ───────────────────────────────────────────────
     WorldMap worldMap(map, height, width);
 
-    std::cout << worldMap.getHeight() << std::endl;
-    std::cout << worldMap.isWall(0, 0) << std::endl;
-
-    MapWindow mapView((height*9)-1, (width*9)-1);
-
+    MapWindow mapView((height * 9) - 1, (width * 9) - 1);
     player.setWorldMap(&worldMap);
 
-    if (!mapView.init()) {
-        return 1;
-    }
-
+    if (!mapView.init()) return 1;
     mapView.initRun(worldMap);
-    // End MiniMap Init
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // Start GameView Init
+
+    // ── GameWindow Init ───────────────────────────────────────────────────────
     GameWindow gameView(screenWidth, screenHeight, FOV);
-
-    if (!gameView.init()) {
-        return 2;
-    }
-
+    if (!gameView.init()) return 2;
     gameView.initRun();
-    // End GameView Init
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // Start Raycaster Init
+
+    // ── Raycaster Init ────────────────────────────────────────────────────────
     Raycaster raycaster(worldMap);
+    raycaster.setMaxDistance(20.0f);
+    // ─────────────────────────────────────────────────────────────────────────
 
-    raycaster.setMaxDistance(12.0);
-    // End Raycaster Init
 
-    // After worldMap setup:
+    // ── Textures ──────────────────────────────────────────────────────────────
     std::vector<Texture> textures;
-    textures.push_back(makeBrickTexture());   // wallType 1
-    textures.push_back(makeStoneTexture());   // wallType 2 (optional)
+    textures.push_back(makeBrickTexture());
+    textures.push_back(makeStoneTexture());
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // Start Timer
+
+    // ── Main Loop ─────────────────────────────────────────────────────────────
     time_t startTime = std::time(nullptr);
 
-    // Main Loop
-    while (mapView.isRunning() || gameView.isRunning())
-    {
-        std::vector<RayHit> rayResults = raycaster.castAllRays(player, screenWidth); 
+    while (mapView.isRunning() || gameView.isRunning()) {
+        std::vector<RayHit> rayResults = raycaster.castAllRays(player, screenWidth);
 
         gameView.update(player, rayResults, textures);
         mapView.update(player, rayResults);
 
-        // Win condition check
-        float dx = player.getX() - (width - 0.5);   // Final block is indexed by [width-1, height-2]
-        float dy = player.getY() - (height - 1.5);  // Use 0.5 so check is based on centre of the area
-        if (dx*dx + dy*dy < 1.5f * 1.5f) {
+        // Win condition
+        float dx = player.getX() - (width  - 0.5f);
+        float dy = player.getY() - (height - 1.5f);
+        if (dx * dx + dy * dy < 1.5f * 1.5f) {
             gameWin(startTime);
         }
-
     }
-    
+
     return 0;
 }

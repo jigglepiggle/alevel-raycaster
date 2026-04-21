@@ -2,17 +2,16 @@
 #include <iostream>
 #include <vector>
 
+#include "windowBase.h"
 #include "raycaster.cpp"
 #include "game.cpp"
 
 
-// ─── Debug state ─────────────────────────────────────────────────────────────
 struct DebugState {
-    bool showSolutionPath = true;   // Toggle with F1
+    bool showSolutionPath = true;   // toggle with F1
 };
 
 
-// ─── SolutionPath ─────────────────────────────────────────────────────────────
 class SolutionPath {
 public:
     void render(SDL_Renderer* renderer,
@@ -20,8 +19,7 @@ public:
                 int cellSize = 9) {
         if (path.empty()) return;
 
-        SDL_SetRenderDrawColor(renderer, 255, 220, 0, 255); // Yellow
-
+        SDL_SetRenderDrawColor(renderer, 255, 220, 0, 255);
         for (const auto& [x, y] : path) {
             SDL_FRect rect = {
                 static_cast<float>(x * cellSize + cellSize / 2 - 1),
@@ -34,28 +32,22 @@ public:
 };
 
 
-// ─── PlayerView ───────────────────────────────────────────────────────────────
 class PlayerView {
 private:
     void drawPlayer(SDL_Renderer* renderer, const Player& player) {
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-
-        int playerPX = static_cast<int>(player.getX() * 9);
-        int playerPY = static_cast<int>(player.getY() * 9);
-
-        SDL_FRect rect = { (float)playerPX, (float)playerPY, 3, 3 };
+        int px = static_cast<int>(player.getX() * 9);
+        int py = static_cast<int>(player.getY() * 9);
+        SDL_FRect rect = { (float)px, (float)py, 3, 3 };
         SDL_RenderFillRect(renderer, &rect);
     }
 
     void drawRays(SDL_Renderer* renderer, const Player& player, const std::vector<RayHit>& rayResults) {
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         for (const auto& ray : rayResults) {
-            float startX = player.getX() * 9;
-            float startY = player.getY() * 9;
-            float endX   = ray.hitX * 9;
-            float endY   = ray.hitY * 9;
-
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-            SDL_RenderLine(renderer, startX, startY, endX, endY);
+            SDL_RenderLine(renderer,
+                player.getX() * 9, player.getY() * 9,
+                ray.hitX * 9,      ray.hitY * 9);
         }
     }
 
@@ -67,8 +59,6 @@ public:
 };
 
 
-// ─── TeleportCursor ───────────────────────────────────────────────────────────
-// Draws a highlight on whichever map cell the mouse is hovering over.
 class TeleportCursor {
 public:
     void render(SDL_Renderer* renderer, float mouseX, float mouseY, int cellSize = 9) {
@@ -87,7 +77,6 @@ public:
 };
 
 
-// ─── Grid ─────────────────────────────────────────────────────────────────────
 class Grid {
 private:
     int squareSize;
@@ -103,9 +92,7 @@ public:
         cellSize = squareSize + borderSize;
     }
 
-    void setWorldMap(const std::vector<std::vector<int>>& map) {
-        worldMap = map;
-    }
+    void setWorldMap(const std::vector<std::vector<int>>& map) { worldMap = map; }
 
     void render(SDL_Renderer* renderer) {
         if (worldMap.empty()) {
@@ -119,12 +106,11 @@ public:
 
         for (int mapY = 0; mapY < mapHeight; mapY++) {
             for (int mapX = 0; mapX < mapWidth; mapX++) {
-                if (worldMap[mapY][mapX] > 0) {
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                } else {
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                }
-
+                SDL_SetRenderDrawColor(renderer,
+                    worldMap[mapY][mapX] > 0 ? 255 : 0,
+                    worldMap[mapY][mapX] > 0 ? 255 : 0,
+                    worldMap[mapY][mapX] > 0 ? 255 : 0,
+                    255);
                 SDL_FRect rect = {
                     static_cast<float>(mapX * cellSize),
                     static_cast<float>(mapY * cellSize),
@@ -138,12 +124,9 @@ public:
 };
 
 
-// ─── MapWindow ────────────────────────────────────────────────────────────────
-class MapWindow {
+class MapWindow : public WindowBase {
 private:
-    SDL_Window*   window;
-    SDL_Renderer* renderer;
-    bool          running;
+    bool running = false;
 
     Grid           grid;
     PlayerView     playerView;
@@ -151,27 +134,14 @@ private:
     TeleportCursor teleportCursor;
 
     std::vector<std::pair<int,int>> solution;
-
-    int windowWidth;
-    int windowHeight;
-
-    // Debug state
-    DebugState debug;
-
-    // Mouse position tracked inside this window
-    float mouseX = 0.0f;
-    float mouseY = 0.0f;
-
-    // Reference to the world map for wall checks during teleport
+    DebugState      debug;
+    float           mouseX   = 0.0f;
+    float           mouseY   = 0.0f;
     const WorldMap* worldMap = nullptr;
 
     static const int CELL_SIZE = 9;
 
-    void cleanup() {
-        if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
-        if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
-        SDL_Quit();
-    }
+    void cleanup() { WindowBase::cleanup(); }
 
     void handleEvents(Player& player) {
         SDL_Event event;
@@ -180,32 +150,20 @@ private:
             if (event.type == SDL_EVENT_QUIT) {
                 running = false;
             }
-
             else if (event.type == SDL_EVENT_KEY_DOWN) {
                 switch (event.key.key) {
-
                     case SDLK_ESCAPE:
                         running = false;
                         break;
-
-                    // ── Debug: toggle solution path overlay ──
                     case SDLK_F1:
                         debug.showSolutionPath = !debug.showSolutionPath;
-                        std::cout << "[Debug] Solution path overlay: "
+                        std::cout << "[Debug] Solution path: "
                                   << (debug.showSolutionPath ? "ON" : "OFF") << std::endl;
                         break;
-
-                    // ── Debug: teleport player to cursor cell ──
                     case SDLK_T: {
-                        // Only act if the mouse is inside this window
-                        SDL_WindowID hoveredID = SDL_GetWindowID(
-                            SDL_GetWindowFromEvent(&event) ? SDL_GetWindowFromEvent(&event) : window);
-
                         int cellX = static_cast<int>(mouseX) / CELL_SIZE;
                         int cellY = static_cast<int>(mouseY) / CELL_SIZE;
-
                         if (worldMap && !worldMap->isWall(cellX, cellY)) {
-                            // Place player in the centre of the cell
                             float newX = cellX + 0.5f;
                             float newY = cellY + 0.5f;
                             player.setPosition(newX, newY);
@@ -217,12 +175,9 @@ private:
                         }
                         break;
                     }
-
                     default: break;
                 }
             }
-
-            // Track mouse position relative to this window
             else if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 if (SDL_GetMouseFocus() == window) {
                     mouseX = event.motion.x;
@@ -233,48 +188,26 @@ private:
     }
 
 public:
-    MapWindow(int width = 566, int height = 566)
-        : window(nullptr), renderer(nullptr),
-          running(false), windowWidth(width), windowHeight(height) {}
+    MapWindow(int width = 566, int height = 566) {
+        winW = width;
+        winH = height;
+    }
 
     ~MapWindow() { cleanup(); }
 
     bool isRunning() { return running; }
 
-    bool init() {
-        if (!SDL_Init(SDL_INIT_VIDEO)) {
-            std::cerr << "SDL_Init failed: " << SDL_GetError() << std::endl;
-            return false;
-        }
-
-        window = SDL_CreateWindow("Grid Window", windowWidth, windowHeight, 0);
-        if (!window) {
-            std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
-            SDL_Quit();
-            return false;
-        }
-
-        renderer = SDL_CreateRenderer(window, nullptr);
-        if (!renderer) {
-            std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << std::endl;
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return false;
-        }
-        return true;
-    }
+    bool init() { return initSDL("Grid Window", winW, winH); }
 
     void initRun(WorldMap& map) {
-        running   = true;
-        worldMap  = &map;
+        running  = true;
+        worldMap = &map;
 
         grid.setWorldMap(map.getMap());
-
         map.solveMaze();
         solution = map.getSolutionPath();
 
-        std::cout << "[Debug] F1 — toggle solution path overlay" << std::endl;
-        std::cout << "[Debug] T  — teleport to hovered map cell" << std::endl;
+        std::cout << "[Debug] F1 — toggle solution path | T — teleport to hovered cell" << std::endl;
     }
 
     void update(Player& player, const std::vector<RayHit>& rayResults) {
@@ -285,20 +218,14 @@ public:
 
         grid.render(renderer);
 
-        // ── Debug overlays ──────────────────────────────────────────────────
-        if (debug.showSolutionPath) {
+        if (debug.showSolutionPath)
             solutionPathView.render(renderer, solution, CELL_SIZE);
-        }
 
-        // Show cursor highlight when mouse is inside the window
-        if (SDL_GetMouseFocus() == window) {
+        if (SDL_GetMouseFocus() == window)
             teleportCursor.render(renderer, mouseX, mouseY, CELL_SIZE);
-        }
-        // ────────────────────────────────────────────────────────────────────
 
         playerView.render(renderer, player, rayResults);
 
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16);
+        presentFrame();
     }
 };
