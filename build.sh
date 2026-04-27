@@ -55,26 +55,29 @@ clean_build() {
 # Function to configure and build project
 build_project() {
     echo -e "${YELLOW}Configuring CMake (Build Type: $BUILD_TYPE)...${NC}"
-    
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
-    
-    # Configure
+
     if [ "$VERBOSE" = true ]; then
         cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DCMAKE_VERBOSE_MAKEFILE=ON ..
     else
         cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" ..
     fi
-    
-    # Build
+
+    cd ..
+
+    # Symlink compile_commands.json to project root for clangd
+    ln -sf "$BUILD_DIR/compile_commands.json" compile_commands.json
+
     echo -e "${YELLOW}Building project...${NC}"
+    cd "$BUILD_DIR"
     if [ "$VERBOSE" = true ]; then
         make -j"$JOBS" VERBOSE=1
     else
         make -j"$JOBS"
     fi
-    
     cd ..
+
     echo -e "${GREEN}Build complete!${NC}"
     echo -e "${BLUE}Executable location: $BUILD_DIR/main${NC}"
 }

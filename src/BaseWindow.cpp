@@ -1,4 +1,4 @@
-#include "windowBase.h"
+#include "BaseWindow.h"
 
 bool WindowBase::initSDL(const char* title, int width, int height, SDL_WindowFlags flags) {
     winW = width;

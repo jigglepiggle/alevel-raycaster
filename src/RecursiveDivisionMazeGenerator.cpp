@@ -1,6 +1,4 @@
-#pragma once
-
-#include "recursiveDivisionMazeGenerator.h"
+#include "RecursiveDivisionMazeGenerator.h"
 #include <iostream>
 #include <ctime>
 
