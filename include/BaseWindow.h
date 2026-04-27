@@ -12,7 +12,7 @@ inline bool pointInRect(float px, float py, const Rect& r) {
 }
 
 // Shared SDL lifecycle base for all window classes.
-class WindowBase {
+class BaseWindow {
 protected:
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;

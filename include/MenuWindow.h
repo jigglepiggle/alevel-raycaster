@@ -34,7 +34,7 @@ struct TextBox {
     int  getIntValue() const;
 };
 
-class MenuWindow : public WindowBase {
+class MenuWindow : public BaseWindow {
 private:
     Button  btnStart;
     Button  btnOptions;

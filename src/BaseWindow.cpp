@@ -1,6 +1,6 @@
 #include "BaseWindow.h"
 
-bool WindowBase::initSDL(const char* title, int width, int height, SDL_WindowFlags flags) {
+bool BaseWindow::initSDL(const char* title, int width, int height, SDL_WindowFlags flags) {
     winW = width;
     winH = height;
 
@@ -25,13 +25,13 @@ bool WindowBase::initSDL(const char* title, int width, int height, SDL_WindowFla
     return true;
 }
 
-void WindowBase::cleanup() {
+void BaseWindow::cleanup() {
     if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
     if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
     SDL_Quit();
 }
 
-void WindowBase::presentFrame(unsigned int delayMs) {
+void BaseWindow::presentFrame(unsigned int delayMs) {
     SDL_RenderPresent(renderer);
     SDL_Delay(delayMs);
 }

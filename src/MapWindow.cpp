@@ -96,7 +96,7 @@ MapWindow::MapWindow(int width, int height) {
 
 MapWindow::~MapWindow() { cleanup(); }
 
-void MapWindow::cleanup() { WindowBase::cleanup(); }
+void MapWindow::cleanup() { BaseWindow::cleanup(); }
 
 bool MapWindow::isRunning() { return running; }
 

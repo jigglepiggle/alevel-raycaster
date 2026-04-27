@@ -48,7 +48,7 @@ public:
     void render(SDL_Renderer* renderer);
 };
 
-class MapWindow : public WindowBase {
+class MapWindow : public BaseWindow {
 private:
     bool           running = false;
     Grid           grid;

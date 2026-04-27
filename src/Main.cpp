@@ -1,5 +1,4 @@
 #include <ctime>
-#include <iostream>
 #include "Config.h"
 #include "Raycaster.h"
 #include "DepthFirstMazeGenerator.h"
@@ -7,13 +6,15 @@
 #include "MapWindow.h"
 #include "GameWindow.h"
 #include "MenuWindow.h"
+#include "FinishWindow.h"
 
 static void checkWinCondition(const Player& player, time_t startTime) {
     float dx = player.getX() - (MAP_WIDTH  - 0.5f);
     float dy = player.getY() - (MAP_HEIGHT - 1.5f);
     if (dx * dx + dy * dy < 1.5f * 1.5f) {
         double elapsed = std::difftime(std::time(nullptr), startTime);
-        std::cout << "Finished maze in " << elapsed << " seconds" << std::endl;
+        FinishWindow win(elapsed);
+        if (win.init()) win.run();
         exit(0);
     }
 }
