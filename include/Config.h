@@ -15,7 +15,7 @@ constexpr float PLAYER_ROTATE_SPEED = 2.0f;
 // Renderer
 constexpr float SCREEN_WIDTH     = 1280.0f;
 constexpr float SCREEN_HEIGHT    = 720.0f;
-constexpr float RAY_MAX_DISTANCE = 20.0f;
+constexpr float RAY_MAX_DISTANCE = 48.0f;
 
 // Maze generation
 enum class MazeAlgorithm { DEPTH_FIRST, RECURSIVE_DIVISION };

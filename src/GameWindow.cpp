@@ -23,41 +23,40 @@ void GameView::drawFloorAndCeiling(uint32_t* pixels, int pitch,
 
     const Texture& floorTex   = textures[0];
     const Texture& ceilingTex = textures[1];
+    const float posZ          = 0.5f * screenH;
 
     for (int y = screenH / 2 + 1; y < screenH; y++) {
-        // How far below the horizon this row is (0.5 = exactly at horizon)
-        float rowAngle  = static_cast<float>(y) / screenH - 0.5f;
-        float rowDist   = 0.5f / rowAngle;
+        float rowDist = posZ / (y - screenH / 2.0f);
 
-        // Step in world space per screen pixel across this row
         float stepX = rowDist * 2.0f * planeX / screenW;
         float stepY = rowDist * 2.0f * planeY / screenW;
 
-        // World coordinate at the leftmost pixel of this row
         float floorX = player.getX() + rowDist * (dirX - planeX);
         float floorY = player.getY() + rowDist * (dirY - planeY);
+
+        int32_t fixedFloorX = static_cast<int32_t>(floorX * 256.0f);
+        int32_t fixedFloorY = static_cast<int32_t>(floorY * 256.0f);
+        int32_t fixedStepX  = static_cast<int32_t>(stepX  * 256.0f);
+        int32_t fixedStepY  = static_cast<int32_t>(stepY  * 256.0f);
 
         int mirrorY = screenH - 1 - y;
 
         for (int x = 0; x < screenW; x++) {
-            int texX = static_cast<int>(floorTex.width  * (floorX - floor(floorX))) & (floorTex.width  - 1);
-            int texY = static_cast<int>(floorTex.height * (floorY - floor(floorY))) & (floorTex.height - 1);
+            // We need only the fractional part, scaled to texture size
+            int texX = static_cast<int>(floorTex.width  * (floorX - std::floor(floorX))) & (floorTex.width  - 1);
+            int texY = static_cast<int>(floorTex.height * (floorY - std::floor(floorY))) & (floorTex.height - 1);
 
-            // Floor
             uint32_t fp = floorTex.getPixel(texX, texY);
-            uint8_t fr = ((fp >> 16) & 0xFF) / 2;
-            uint8_t fg = ((fp >> 8)  & 0xFF) / 2;
-            uint8_t fb = ((fp)       & 0xFF) / 2;
-            setPixel(pixels, pitch, x, y, fr, fg, fb);
+            setPixel(pixels, pitch, x, y,
+                     ((fp >> 16) & 0xFF) / 2,
+                     ((fp >> 8)  & 0xFF) / 2,
+                     ((fp)       & 0xFF) / 2);
 
-            // Ceiling — mirrored row, same UV
-            int ctx = static_cast<int>(ceilingTex.width  * (floorX - floor(floorX))) & (ceilingTex.width  - 1);
-            int cty = static_cast<int>(ceilingTex.height * (floorY - floor(floorY))) & (ceilingTex.height - 1);
-            uint32_t cp = ceilingTex.getPixel(ctx, cty);
-            uint8_t cr = ((cp >> 16) & 0xFF) / 3;
-            uint8_t cg = ((cp >> 8)  & 0xFF) / 3;
-            uint8_t cb = ((cp)       & 0xFF) / 3;
-            setPixel(pixels, pitch, x, mirrorY, cr, cg, cb);
+            uint32_t cp = ceilingTex.getPixel(texX, texY);
+            setPixel(pixels, pitch, x, mirrorY,
+                     ((cp >> 16) & 0xFF) / 3,
+                     ((cp >> 8)  & 0xFF) / 3,
+                     ((cp)       & 0xFF) / 3);
 
             floorX += stepX;
             floorY += stepY;
