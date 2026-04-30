@@ -9,6 +9,7 @@ private:
 
     std::vector<std::vector<int>> mapData;
     std::vector<std::pair<int,int>> solutionPath;
+    bool isPassable(int x, int y) const;
 
 public:
     explicit WorldMap(const std::vector<std::vector<int>>& mapData, int height, int width);

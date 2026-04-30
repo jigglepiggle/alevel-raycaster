@@ -145,8 +145,8 @@ void RecursiveDivisionMazeGenerator::generateMaze() {
     initializeGrid();
     subdivide(Rectangle(1, 1, width - 2, height - 2));
 
-    maze[1][0] = CellType::PASSAGE;
-    maze[height - 2][width - 1] = CellType::PASSAGE;
+    maze[1][0] = 2;
+    maze[height - 2][width - 1] = 2;
 }
 
 void RecursiveDivisionMazeGenerator::printMaze() const {
@@ -186,14 +186,10 @@ std::vector<int> RecursiveDivisionMazeGenerator::getMazeAsVector() const {
     return flatMaze;
 }
 
-int RecursiveDivisionMazeGenerator::getWidth() const { 
-    return width; 
-}
+int RecursiveDivisionMazeGenerator::getWidth() const { return width; }
 
-int RecursiveDivisionMazeGenerator::getHeight() const { 
-    return height; 
-}
+int RecursiveDivisionMazeGenerator::getHeight() const { return height; }
 
 const std::vector<std::vector<int>>& RecursiveDivisionMazeGenerator::getMaze() const { 
-    return maze; 
+    return maze;
 }

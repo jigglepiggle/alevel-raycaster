@@ -34,15 +34,9 @@ void GameView::drawFloorAndCeiling(uint32_t* pixels, int pitch,
         float floorX = player.getX() + rowDist * (dirX - planeX);
         float floorY = player.getY() + rowDist * (dirY - planeY);
 
-        int32_t fixedFloorX = static_cast<int32_t>(floorX * 256.0f);
-        int32_t fixedFloorY = static_cast<int32_t>(floorY * 256.0f);
-        int32_t fixedStepX  = static_cast<int32_t>(stepX  * 256.0f);
-        int32_t fixedStepY  = static_cast<int32_t>(stepY  * 256.0f);
-
         int mirrorY = screenH - 1 - y;
 
         for (int x = 0; x < screenW; x++) {
-            // We need only the fractional part, scaled to texture size
             int texX = static_cast<int>(floorTex.width  * (floorX - std::floor(floorX))) & (floorTex.width  - 1);
             int texY = static_cast<int>(floorTex.height * (floorY - std::floor(floorY))) & (floorTex.height - 1);
 
@@ -78,16 +72,16 @@ void GameView::drawWalls(uint32_t* pixels, int pitch,
         int wallTop   = (screenH - fullWallHeight) / 2;
         int drawStart = std::max(0, wallTop);
         int drawEnd   = std::min(screenH - 1, wallTop + fullWallHeight);
-        int texIndex  = ray.wallType - 1;
+
+        int texIndex = -1;
+        switch (ray.wallType) {
+            case 1: texIndex = 0; break;  // brick
+            case 2: texIndex = 1; break;  // stone
+        }
 
         if (texIndex < 0 || texIndex >= static_cast<int>(textures.size())) {
-            uint8_t r = 100, g = 100, b = 100;
-            switch (ray.wallType) {
-                case 1: r = 255; g = 0;   b = 0;   break;
-                case 2: r = 255; g = 255; b = 0;   break;
-            }
             for (int y = drawStart; y <= drawEnd; y++)
-                setPixel(pixels, pitch, i, y, r, g, b);
+                setPixel(pixels, pitch, i, y, 100, 100, 100);
             continue;
         }
 

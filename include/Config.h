@@ -13,7 +13,7 @@ constexpr float PLAYER_MOVE_SPEED   = 0.1f;
 constexpr float PLAYER_ROTATE_SPEED = 1.2f;
 
 // Renderer
-constexpr float SCREEN_WIDTH     = 720.0f;
+constexpr float SCREEN_WIDTH     = 1280.0f;
 constexpr float SCREEN_HEIGHT    = 720.0f;
 constexpr float RAY_MAX_DISTANCE = 48.0f;
 
