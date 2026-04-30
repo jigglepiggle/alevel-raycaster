@@ -1,4 +1,6 @@
 #include <ctime>
+#include <SDL3/SDL.h>
+#include <iostream>
 #include "Config.h"
 #include "Raycaster.h"
 #include "DepthFirstMazeGenerator.h"
@@ -15,39 +17,55 @@ static void checkWinCondition(const Player& player, time_t startTime) {
         double elapsed = std::difftime(std::time(nullptr), startTime);
         FinishWindow win(elapsed);
         if (win.init()) win.run();
+        SDL_Quit();
         exit(0);
     }
 }
 
 int main() {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        std::cerr << "SDL_Init failed: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
     MenuWindow menu;
-    if (!menu.init()) return 1;
+    if (!menu.init()) { SDL_Quit(); return 1; }
 
     MenuResult menuResult = menu.run();
-    if (menuResult.action == MenuAction::EXIT) return 0;
-    if (menuResult.action == MenuAction::OPTIONS)
-        std::cout << "Options not yet implemented, starting game." << std::endl;
+    if (menuResult.action == MenuAction::EXIT) { SDL_Quit(); return 0; }
 
-    const int seed = menuResult.seed;
-    std::cout << "Starting game with seed: " << seed << std::endl;
+    const GameOptions& opts = menuResult.options;
+    std::cout << "Starting game with seed: " << opts.seed
+              << ", algorithm: " << (opts.algorithm == MazeAlgorithm::RECURSIVE_DIVISION
+                                     ? "Recursive Division" : "Depth First") << std::endl;
 
-    RecursiveDivisionMazeGenerator rdGen(MAP_WIDTH, MAP_HEIGHT, seed);
-    rdGen.generateMaze();
-    [[maybe_unused]] DepthFirstMazeGenerator dfGen(MAP_WIDTH, MAP_HEIGHT, seed);
-    dfGen.generateMaze();
+    std::vector<std::vector<int>> mazeData;
+    if (opts.algorithm == MazeAlgorithm::RECURSIVE_DIVISION) {
+        RecursiveDivisionMazeGenerator rdGen(MAP_WIDTH, MAP_HEIGHT, opts.seed);
+        rdGen.generateMaze();
+        mazeData = rdGen.getMaze();
+    } else {
+        DepthFirstMazeGenerator dfGen(MAP_WIDTH, MAP_HEIGHT, opts.seed);
+        dfGen.generateMaze();
+        mazeData = dfGen.getMaze();
+    }
 
-    WorldMap worldMap(rdGen.getMaze(), MAP_HEIGHT, MAP_WIDTH);
+    WorldMap worldMap(mazeData, MAP_HEIGHT, MAP_WIDTH);
 
-    Player player(PLAYER_START_X, PLAYER_START_Y, PLAYER_START_ANGLE, PLAYER_FOV, PLAYER_ROTATE_SPEED, PLAYER_MOVE_SPEED);
+    Player player(PLAYER_START_X, PLAYER_START_Y, PLAYER_START_ANGLE,
+                  PLAYER_FOV, PLAYER_ROTATE_SPEED, PLAYER_MOVE_SPEED);
     player.setWorldMap(&worldMap);
 
-    MapWindow mapView((MAP_HEIGHT * 9) - 1, (MAP_WIDTH * 9) - 1);
-    if (!mapView.init()) return 1;
-    mapView.initRun(worldMap);
-
     GameWindow gameView(SCREEN_WIDTH, SCREEN_HEIGHT, PLAYER_FOV);
-    if (!gameView.init()) return 2;
+    if (!gameView.init()) { SDL_Quit(); return 2; }
     gameView.initRun();
+
+    MapWindow* mapView = nullptr;
+    if (opts.showMap) {
+        mapView = new MapWindow((MAP_HEIGHT * 9) - 1, (MAP_WIDTH * 9) - 1);
+        if (!mapView->init()) { delete mapView; mapView = nullptr; }
+        else mapView->initRun(worldMap, opts.showRays);
+    }
 
     Raycaster raycaster(worldMap);
     raycaster.setMaxDistance(RAY_MAX_DISTANCE);
@@ -55,12 +73,15 @@ int main() {
     std::vector<Texture> textures = { makeBrickTexture(), makeStoneTexture() };
 
     const time_t startTime = std::time(nullptr);
-    while (mapView.isRunning() || gameView.isRunning()) {
+    while (gameView.isRunning()) {
         std::vector<RayHit> rayResults = raycaster.castAllRays(player, SCREEN_WIDTH);
         gameView.update(player, rayResults, textures);
-        mapView.update(player, rayResults);
+        if (mapView && mapView->isRunning())
+            mapView->update(player, rayResults);
         checkWinCondition(player, startTime);
     }
 
+    delete mapView;
+    SDL_Quit();
     return 0;
 }

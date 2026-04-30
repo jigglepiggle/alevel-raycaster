@@ -5,7 +5,7 @@
 
 FinishWindow::FinishWindow(double elapsed) : elapsedSeconds(elapsed) {
     winW = 600;
-    winH = 400;
+    winH = 420;
 }
 
 bool FinishWindow::init() {
@@ -23,8 +23,8 @@ void FinishWindow::drawBackground() {
 }
 
 void FinishWindow::drawTitle() {
-    drawTextCentredInWindow(renderer, "YOU ESCAPED!", winW, 80.0f, 4.0f, 20,  20,  20 );
-    drawTextCentredInWindow(renderer, "YOU ESCAPED!", winW, 78.0f, 4.0f, 100, 255, 120);
+    drawTextCentredInWindow(renderer, "YOU ESCAPED!", winW, 62.0f, 6.0f, 20,  20,  20 );
+    drawTextCentredInWindow(renderer, "YOU ESCAPED!", winW, 60.0f, 6.0f, 100, 255, 120);
 }
 
 void FinishWindow::drawTime() {
@@ -38,12 +38,12 @@ void FinishWindow::drawTime() {
         << std::setw(2) << secs << "."
         << std::setw(2) << ms;
 
-    drawTextCentredInWindow(renderer, "TIME",    winW, 160.0f, 2.0f, 120, 120, 120);
-    drawTextCentredInWindow(renderer, oss.str(), winW, 190.0f, 4.0f, 255, 220, 80 );
+    drawTextCentredInWindow(renderer, "TIME",    winW, 170.0f, 3.0f, 120, 120, 120);
+    drawTextCentredInWindow(renderer, oss.str(), winW, 210.0f, 6.0f, 255, 220, 80 );
 }
 
 void FinishWindow::run() {
-    Rect btnExit = { (winW - 260.0f) / 2.0f, 290.0f, 260.0f, 52.0f };
+    Rect btnExit = { (winW - 260.0f) / 2.0f, 330.0f, 260.0f, 46.0f };
     bool hovered = false;
 
     while (true) {

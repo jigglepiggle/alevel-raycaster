@@ -1,10 +1,11 @@
 #include "MenuWindow.h"
+#include "OptionsWindow.h"
 #include "UIHelpers.h"
 
 void Button::render(SDL_Renderer* renderer) const {
     drawRoundedRect(renderer, bounds, 8.0f, colR, colG, colB, 255, hovered);
     drawRectBorder(renderer, bounds, 200, 200, 200);
-    drawTextCentred(renderer, label, bounds, 2.0f, 255, 255, 255);
+    drawTextCentred(renderer, label, bounds, 1.5f, 255, 255, 255);
 }
 
 bool Button::contains(float mx, float my) const {
@@ -18,13 +19,13 @@ void TextBox::render(SDL_Renderer* renderer) const {
                    focused ? 120 : 80,
                    focused ? 180 : 80,
                    focused ? 255 : 80);
-    drawText(renderer, label, bounds.x, bounds.y - 20.0f, 1.5f, 180, 180, 180);
+    drawText(renderer, label, bounds.x, bounds.y - 16.0f, 1.2f, 180, 180, 180);
 
     std::string display = value.empty() ? "0" : value;
     uint8_t alpha = value.empty() ? 100 : 255;
     drawText(renderer, display + (focused ? "_" : ""),
-             bounds.x + 10, bounds.y + (bounds.h - 12) / 2.0f,
-             1.5f, alpha, alpha, alpha);
+             bounds.x + 10, bounds.y + (bounds.h - 10) / 2.0f,
+             1.2f, alpha, alpha, alpha);
 }
 
 bool TextBox::contains(float mx, float my) const {
@@ -48,7 +49,7 @@ int TextBox::getIntValue() const {
     try { return std::stoi(value); } catch (...) { return 0; }
 }
 
-MenuWindow::MenuWindow() { winW = 600; winH = 500; }
+MenuWindow::MenuWindow() { winW = 600; winH = 400; }
 
 bool MenuWindow::init() {
     if (!initSDL("Maze Runner", winW, winH)) return false;
@@ -59,14 +60,13 @@ bool MenuWindow::init() {
 void MenuWindow::layout() {
     float cx   = winW / 2.0f;
     float btnW = 260.0f;
-    float btnH = 52.0f;
-    float gap  = 18.0f;
+    float btnH = 36.0f;
+    float gap  = 6.0f;
     float top  = 220.0f;
 
-    btnStart   = { { cx - btnW/2, top,                          btnW, btnH }, "START GAME", 30,  110, 60  };
-    tbSeed     = { { cx - btnW/2, top + btnH + gap,             btnW, 44   }, "Seed", "", false, 10 };
-    btnOptions = { { cx - btnW/2, top + (btnH + gap) * 2 + 10,  btnW, btnH }, "OPTIONS",   60,  60,  130 };
-    btnExit    = { { cx - btnW/2, top + (btnH + gap) * 3 + 10,  btnW, btnH }, "EXIT",      130, 40,  40  };
+    btnStart   = { { cx - btnW/2, top,                    btnW, btnH }, "START GAME", 30,  110, 60  };
+    btnOptions = { { cx - btnW/2, top + (btnH + gap),     btnW, btnH }, "OPTIONS",    60,  60,  130 };
+    btnExit    = { { cx - btnW/2, top + (btnH + gap) * 2, btnW, btnH }, "EXIT",       130, 40,  40  };
 }
 
 void MenuWindow::drawBackground() {
@@ -80,22 +80,19 @@ void MenuWindow::drawBackground() {
 }
 
 void MenuWindow::drawTitle() {
-    drawText(renderer, "MAZE",   122, 62,  6.0f, 20,  20,  20 );
-    drawText(renderer, "MAZE",   120, 60,  6.0f, 80,  160, 255);
-    drawText(renderer, "RUNNER", 82,  122, 4.0f, 20,  20,  20 );
-    drawText(renderer, "RUNNER", 80,  120, 4.0f, 200, 220, 255);
+    drawTextCentredInWindow(renderer, "MAZE",   winW, 62.0f,  6.0f, 20,  20,  20 );
+    drawTextCentredInWindow(renderer, "MAZE",   winW, 60.0f,  6.0f, 80,  160, 255);
+    drawTextCentredInWindow(renderer, "RUNNER", winW, 114.0f, 5.0f, 20,  20,  20 );
+    drawTextCentredInWindow(renderer, "RUNNER", winW, 112.0f, 5.0f, 200, 220, 255);
 }
 
 MenuResult MenuWindow::run() {
-    SDL_StartTextInput(window);
-
     while (true) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
-                SDL_StopTextInput(window);
                 cleanup();
-                return { MenuAction::EXIT, 0 };
+                return { MenuAction::EXIT, options };
             } else if (event.type == SDL_EVENT_MOUSE_MOTION) {
                 float mx = event.motion.x, my = event.motion.y;
                 btnStart.hovered   = btnStart.contains(mx, my);
@@ -104,37 +101,31 @@ MenuResult MenuWindow::run() {
             } else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
                        event.button.button == SDL_BUTTON_LEFT) {
                 float mx = event.button.x, my = event.button.y;
-                auto finish = [&](MenuAction a) -> MenuResult {
-                    SDL_StopTextInput(window);
+
+                if (btnStart.contains(mx, my)) {
                     cleanup();
-                    return { a, tbSeed.getIntValue() };
-                };
-                if (btnStart.contains(mx, my))   return finish(MenuAction::START);
-                if (btnOptions.contains(mx, my)) return finish(MenuAction::OPTIONS);
-                if (btnExit.contains(mx, my))    return finish(MenuAction::EXIT);
-                tbSeed.focused = tbSeed.contains(mx, my);
-            } else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.key == SDLK_ESCAPE) {
-                    SDL_StopTextInput(window);
-                    cleanup();
-                    return { MenuAction::EXIT, 0 };
+                    return { MenuAction::START, options };
                 }
-                if (event.key.key == SDLK_RETURN) tbSeed.focused = false;
-                tbSeed.handleKey(event.key.key, "");
-            } else if (event.type == SDL_EVENT_TEXT_INPUT) {
-                tbSeed.handleTextInput(event.text.text);
+                if (btnExit.contains(mx, my)) {
+                    cleanup();
+                    return { MenuAction::EXIT, options };
+                }
+                if (btnOptions.contains(mx, my)) {
+                    OptionsWindow opts(options);
+                    if (opts.init()) opts.run();
+                }
+            } else if (event.type == SDL_EVENT_KEY_DOWN &&
+                       event.key.key == SDLK_ESCAPE) {
+                cleanup();
+                return { MenuAction::EXIT, options };
             }
         }
 
         drawBackground();
         drawTitle();
         btnStart.render(renderer);
-        tbSeed.render(renderer);
         btnOptions.render(renderer);
         btnExit.render(renderer);
-
-        std::string hint = "Seed: " + (tbSeed.value.empty() ? "random (0)" : tbSeed.value);
-        drawText(renderer, hint, 12, winH - 22, 1.0f, 80, 80, 80);
 
         presentFrame();
     }

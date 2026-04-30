@@ -9,6 +9,7 @@
 
 struct DebugState {
     bool showSolutionPath = false;
+    bool showRays         = false;
 };
 
 class SolutionPath {
@@ -25,7 +26,7 @@ private:
                   const std::vector<RayHit>& rayResults);
 public:
     void render(SDL_Renderer* renderer, const Player& player,
-                const std::vector<RayHit>& rayResults);
+                const std::vector<RayHit>& rayResults, bool showRays);
 };
 
 class TeleportCursor {
@@ -56,8 +57,8 @@ private:
     SolutionPath   solutionPathView;
     TeleportCursor teleportCursor;
     DebugState     debug;
-    float          mouseX   = 0.0f;
-    float          mouseY   = 0.0f;
+    float          mouseX    = 0.0f;
+    float          mouseY    = 0.0f;
     const WorldMap* worldMap = nullptr;
     std::vector<std::pair<int,int>> solution;
 
@@ -72,6 +73,6 @@ public:
 
     bool isRunning();
     bool init();
-    void initRun(WorldMap& map);
+    void initRun(WorldMap& map, bool showRays);
     void update(Player& player, const std::vector<RayHit>& rayResults);
 };

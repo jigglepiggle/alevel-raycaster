@@ -37,9 +37,10 @@ void PlayerView::drawRays(SDL_Renderer* renderer, const Player& player,
 }
 
 void PlayerView::render(SDL_Renderer* renderer, const Player& player,
-                        const std::vector<RayHit>& rayResults) {
+                        const std::vector<RayHit>& rayResults, bool showRays) {
     drawPlayer(renderer, player);
-    drawRays(renderer, player, rayResults);
+    if (showRays)
+        drawRays(renderer, player, rayResults);
 }
 
 void TeleportCursor::render(SDL_Renderer* renderer, float mouseX, float mouseY, int cellSize) {
@@ -102,13 +103,14 @@ bool MapWindow::isRunning() { return running; }
 
 bool MapWindow::init() { return initSDL("Grid Window", winW, winH); }
 
-void MapWindow::initRun(WorldMap& map) {
-    running  = true;
-    worldMap = &map;
+void MapWindow::initRun(WorldMap& map, bool showRays) {
+    running          = true;
+    worldMap         = &map;
+    debug.showRays   = showRays;
     grid.setWorldMap(map.getMap());
     map.solveMaze();
     solution = map.getSolutionPath();
-    std::cout << "[Debug] F1 — toggle solution path | T — teleport to hovered cell" << std::endl;
+    std::cout << "[Debug] F1 — toggle solution path | F2 — toggle rays | T — teleport to hovered cell" << std::endl;
 }
 
 void MapWindow::handleEvents(Player& player) {
@@ -125,6 +127,11 @@ void MapWindow::handleEvents(Player& player) {
                     debug.showSolutionPath = !debug.showSolutionPath;
                     std::cout << "[Debug] Solution path: "
                               << (debug.showSolutionPath ? "ON" : "OFF") << std::endl;
+                    break;
+                case SDLK_F2:
+                    debug.showRays = !debug.showRays;
+                    std::cout << "[Debug] Rays: "
+                              << (debug.showRays ? "ON" : "OFF") << std::endl;
                     break;
                 case SDLK_T: {
                     int cellX = static_cast<int>(mouseX) / CELL_SIZE;
@@ -161,6 +168,6 @@ void MapWindow::update(Player& player, const std::vector<RayHit>& rayResults) {
         solutionPathView.render(renderer, solution, CELL_SIZE);
     if (SDL_GetMouseFocus() == window)
         teleportCursor.render(renderer, mouseX, mouseY, CELL_SIZE);
-    playerView.render(renderer, player, rayResults);
-    presentFrame();
+    playerView.render(renderer, player, rayResults, debug.showRays);
+    presentFrame(0);
 }

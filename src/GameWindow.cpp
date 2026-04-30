@@ -178,6 +178,13 @@ bool GameWindow::init() {
 void GameWindow::initRun() { running = true; }
 
 void GameWindow::handleEvents(Player& player) {
+    SDL_PumpEvents();
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_QUIT) running = false;
+    }
+
     const bool* keys = SDL_GetKeyboardState(nullptr);
     if (keys[SDL_SCANCODE_ESCAPE])                         running = false;
     if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP])    player.moveForward();
@@ -191,5 +198,5 @@ void GameWindow::update(Player& player, const std::vector<RayHit>& rayResults,
     handleEvents(player);
     SDL_RenderClear(renderer);
     gameView.render(renderer, player, rayResults, winW, winH, textures);
-    presentFrame();
+    presentFrame(16);
 }

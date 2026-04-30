@@ -2,12 +2,13 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include "BaseWindow.h"
+#include "Config.h"
 
-enum class MenuAction { START, OPTIONS, EXIT };
+enum class MenuAction { START, EXIT };
 
 struct MenuResult {
-    MenuAction action;
-    int        seed;
+    MenuAction  action;
+    GameOptions options;
 };
 
 struct Button {
@@ -36,10 +37,10 @@ struct TextBox {
 
 class MenuWindow : public BaseWindow {
 private:
-    Button  btnStart;
-    Button  btnOptions;
-    Button  btnExit;
-    TextBox tbSeed;
+    Button      btnStart;
+    Button      btnOptions;
+    Button      btnExit;
+    GameOptions options;
 
     void drawBackground();
     void drawTitle();
