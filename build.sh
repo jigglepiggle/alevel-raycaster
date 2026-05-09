@@ -2,9 +2,10 @@
 
 # Usage: ./build.sh [command] [options]
 
-set -e  # Exit on any error
+# Exit immediately if any command returns a non-zero status.
+set -e
 
-# Colors for output
+# ANSI colour codes used to make terminal output easier to read.
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -12,12 +13,13 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Configuration
+# Default configuration values.
 BUILD_DIR="build"
 BUILD_TYPE="Release"
-JOBS=$(nproc 2>/dev/null || echo 4)  # Use all CPU cores, fallback to 4
+# Use all available CPU cores for parallel compilation; fall back to 4 if nproc is unavailable.
+JOBS=$(nproc 2>/dev/null || echo 4)
 
-# Function to display usage
+# Prints a usage summary with all supported commands and options.
 show_help() {
     echo -e "${CYAN}CMake Build Script${NC}"
     echo ""
@@ -41,7 +43,7 @@ show_help() {
     echo "  ./build.sh build --jobs 8 --debug"
 }
 
-# Function to clean build directory
+# Removes the build directory if it exists; reports if there is nothing to clean.
 clean_build() {
     echo -e "${YELLOW}Cleaning build directory...${NC}"
     if [ -d "$BUILD_DIR" ]; then
@@ -52,12 +54,13 @@ clean_build() {
     fi
 }
 
-# Function to configure and build project
+# Creates the build directory, runs CMake configure, then compiles with make.
 build_project() {
     echo -e "${YELLOW}Configuring CMake (Build Type: $BUILD_TYPE)...${NC}"
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
 
+    # Pass VERBOSE_MAKEFILE when verbose mode is requested so every compiler command is printed.
     if [ "$VERBOSE" = true ]; then
         cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DCMAKE_VERBOSE_MAKEFILE=ON ..
     else
@@ -66,11 +69,12 @@ build_project() {
 
     cd ..
 
-    # Symlink compile_commands.json to project root for clangd
+    # Symlink compile_commands.json to the project root so clangd picks it up automatically.
     ln -sf "$BUILD_DIR/compile_commands.json" compile_commands.json
 
     echo -e "${YELLOW}Building project...${NC}"
     cd "$BUILD_DIR"
+    # Use VERBOSE=1 with make for extra per-file output in verbose mode.
     if [ "$VERBOSE" = true ]; then
         make -j"$JOBS" VERBOSE=1
     else
@@ -82,7 +86,7 @@ build_project() {
     echo -e "${BLUE}Executable location: $BUILD_DIR/main${NC}"
 }
 
-# Parse command line arguments
+# Parse all command-line arguments before executing any action.
 VERBOSE=false
 COMMAND=""
 
@@ -93,6 +97,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --jobs)
+            # Override the parallel job count with the next argument.
             JOBS="$2"
             shift 2
             ;;
@@ -116,14 +121,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Default to build if no command specified
+# Default to the build command if the user provided no explicit command.
 if [ -z "$COMMAND" ]; then
     COMMAND="build"
 fi
 
 echo -e "${BLUE}Starting $COMMAND...${NC}"
 
-# Execute command
+# Dispatch to the appropriate function based on the parsed command.
 case $COMMAND in
     clean)
         clean_build
@@ -132,6 +137,7 @@ case $COMMAND in
         build_project
         ;;
     rebuild)
+        # Rebuild performs a clean followed by a fresh build.
         clean_build
         build_project
         ;;
