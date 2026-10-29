@@ -12,3 +12,4 @@ result-*
 html/
 xml/
 Doxyfile
+compile_commands.json
